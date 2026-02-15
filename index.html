@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+        />
+        <meta
+            name="robots"
+            content="noindex,nofollow"
+        />
+
+        <title>Ente Photos Redirect</title>
+
+        <style>
+            /*@font-face {
+                font-weight: 1 999;
+                src: url('https://yolan.design/assets/fonts/Parkinsans-VariableFont_wght.ttf');
+                font-family: 'Parkinsans';
+            }*/
+
+            html {
+                --y-c-bg: hsl(0, 0%, 100%);
+                --y-c-fill: hsl(25, 15%, 15%);
+            }
+            @media (prefers-color-scheme: dark) {
+                html {
+                    --y-c-bg: hsl(0, 0%, 0%);
+                    --y-c-fill: hsl(25, 80%, 90%);
+                }
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            body {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                min-height: 100svh;
+                margin: 0;
+                padding: 2em;
+                background-color: var(--y-c-bg);
+                color: var(--y-c-fill);
+                font-family: 'Parkinsans', sans-serif;
+            }
+            main {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                justify-content: center;
+                width: 100%;
+                max-width: 640px;
+                gap: 1em;
+                animation: fadeIn 0.5s ease-in-out;
+            }
+
+            @keyframes fadeIn {
+                0% {
+                    opacity: 0;
+                }
+                100% {
+                    opacity: 1;
+                }
+            }
+
+            main > * {
+                margin: 0;
+            }
+
+            a,
+            a:visited {
+                color: var(--y-c-fill);
+                opacity: 0.85;
+                user-select: none;
+            }
+
+            [hidden] {
+                display: none !important;
+            }
+        </style>
+    </head>
+    <body>
+        <main hidden>
+            <h2>Album photo</h2>
+            <p>
+                Si vous n'êtes pas redirigé automatiquement, cliquez-ici :
+                <a
+                    id="open-link"
+                    href=""
+                    target="_self"
+                    rel="noopener"
+                >
+                    Ouvrir manuellement
+                </a>
+            </p>
+        </main>
+
+        <script>
+            (function () {
+                const url = new URL(window.location.href);
+                const urlGet = {
+                    t: url.searchParams.get('t'),
+                    hash:
+                        url.searchParams.get('k')
+                        || url.searchParams.get('h')
+                        || (url.hash && url.hash.length > 1 ? url.hash.slice(1) : ''),
+                };
+
+                if (!urlGet.t || !urlGet.hash) {
+                    console.error('Missing required URL parameters "t" and "k"/"h"/hash.');
+                    return;
+                }
+
+                const targetRedirect = 'https://photos.yolan.design/?t=' + urlGet.t + '#' + urlGet.hash;
+                document.getElementById('open-link').href = targetRedirect;
+
+                const showMain = () => document.querySelector('main').removeAttribute('hidden');
+                setTimeout(showMain, 3000);
+
+                try {
+                    window.location.replace(targetRedirect);
+                } catch (e) {
+                    console.error('Invalid URL:', targetRedirect, e);
+                    showMain();
+                }
+            })();
+        </script>
+    </body>
+</html>
