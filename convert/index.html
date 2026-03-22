@@ -1,0 +1,270 @@
+﻿<!doctype html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+        />
+        <meta
+            name="robots"
+            content="noindex,nofollow"
+        />
+
+        <title>Ente Shared URL Convertor</title>
+
+        <style>
+            @font-face {
+                font-weight: 1 999;
+                src: url('https://yolan.design/assets/fonts/Parkinsans-VariableFont_wght.ttf');
+                font-family: 'Parkinsans';
+            }
+
+            html {
+                --y-c-bg: hsl(0, 0%, 100%);
+                --y-c-fill: hsl(25, 15%, 15%);
+                --y-c-muted: hsl(25, 10%, 35%);
+                --y-c-line: hsl(25, 12%, 80%);
+                --y-c-danger: hsl(0, 75%, 55%);
+            }
+
+            @media (prefers-color-scheme: dark) {
+                html {
+                    --y-c-bg: hsl(0, 0%, 0%);
+                    --y-c-fill: hsl(25, 80%, 90%);
+                    --y-c-muted: hsl(25, 30%, 75%);
+                    --y-c-line: hsl(25, 20%, 30%);
+                }
+            }
+
+            * {
+                box-sizing: border-box;
+                margin: 0;
+            }
+
+            body {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                min-height: 100svh;
+                margin: 0;
+                padding: 1rem;
+                background-color: var(--y-c-bg);
+                color: var(--y-c-fill);
+                font-family: 'Parkinsans', sans-serif;
+            }
+
+            main {
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                width: 100%;
+                max-width: 720px;
+                padding-block: 2rem;
+                gap: 1rem;
+            }
+
+            main > * {
+                width: 100%;
+            }
+
+            textarea,
+            button {
+                width: 100%;
+                padding: 0.7rem 0.85rem;
+                border: 1px solid var(--y-c-line);
+                border-radius: 10px;
+                background: transparent;
+                color: var(--y-c-fill);
+                font: inherit;
+            }
+
+            textarea {
+                resize: vertical;
+            }
+
+            button {
+                cursor: pointer;
+                transition: transform 0.3s ease;
+            }
+
+            button:active {
+                transform: scale(0.97);
+                transition: transform 0.05s ease-out;
+            }
+
+            #status {
+                min-height: 1.3em;
+                color: var(--y-c-muted);
+            }
+
+            .c-danger {
+                color: var(--y-c-danger) !important;
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <textarea
+                id="source-url"
+                rows="4"
+                placeholder="https://ente.yolan.design/?t=<>#<>"
+                autocomplete="off"
+                spellcheck="false"
+            ></textarea>
+
+            <button
+                id="convert-btn"
+                type="button"
+            >
+                Convertir
+            </button>
+
+            <textarea
+                id="output-url"
+                rows="4"
+                readonly
+                placeholder="https://photos.yolan.design/?t=<>&k=<>"
+                spellcheck="false"
+            ></textarea>
+
+            <button
+                id="copy-btn"
+                type="button"
+            >
+                Copier le résultat
+            </button>
+
+            <span
+                id="status"
+                aria-live="polite"
+            ></span>
+        </main>
+
+        <script>
+            (function () {
+                const sourceEl = document.getElementById('source-url');
+                const outputEl = document.getElementById('output-url');
+                const statusEl = document.getElementById('status');
+                const convertBtn = document.getElementById('convert-btn');
+                const copyBtn = document.getElementById('copy-btn');
+
+                sourceEl.value = '';
+                outputEl.value = '';
+
+                function setStatus(message = '&nbsp;', isError) {
+                    statusEl.classList.toggle('c-danger', !!isError);
+                    statusEl.innerHTML = message;
+                }
+                setStatus();
+
+                function forcePhotosSubdomain(hostname) {
+                    const parts = hostname.split('.').filter(Boolean);
+                    if (parts.length === 0) return 'photos';
+                    if (parts.length === 1) return 'photos.' + parts[0];
+                    if (parts.length === 2) return 'photos.' + parts.join('.');
+                    parts[0] = 'photos';
+                    return parts.join('.');
+                }
+
+                function convert(input) {
+                    const raw = (input || '').trim();
+                    if (!raw) throw new Error('URL source manquante.');
+
+                    const url = new URL(raw);
+                    const hash = url.hash && url.hash.length > 1 ? url.hash.slice(1) : '';
+                    if (hash) {
+                        url.searchParams.set('k', hash);
+                    }
+
+                    url.hash = '';
+                    url.hostname = forcePhotosSubdomain(url.hostname);
+                    return url.toString();
+                }
+
+                function selectForManualCopy() {
+                    outputEl.focus();
+                    outputEl.select();
+                    outputEl.setSelectionRange(0, outputEl.value.length);
+                }
+
+                function copyWithExecCommand(text) {
+                    const tempEl = document.createElement('textarea');
+                    tempEl.value = text;
+                    tempEl.setAttribute('readonly', '');
+                    tempEl.style.position = 'fixed';
+                    tempEl.style.top = '0';
+                    tempEl.style.left = '0';
+                    tempEl.style.opacity = '0';
+                    document.body.appendChild(tempEl);
+
+                    tempEl.focus();
+                    tempEl.select();
+                    tempEl.setSelectionRange(0, tempEl.value.length);
+
+                    let copied = false;
+                    try {
+                        copied = document.execCommand('copy');
+                    } catch (err) {
+                        copied = false;
+                    }
+
+                    document.body.removeChild(tempEl);
+                    return copied;
+                }
+
+                convertBtn.addEventListener('click', function () {
+                    try {
+                        const result = convert(sourceEl.value);
+                        outputEl.value = result;
+                        setStatus('Lien converti.');
+                    } catch (err) {
+                        outputEl.value = '';
+                        setStatus(err.message || 'URL invalide.', true);
+                    }
+                });
+
+                copyBtn.addEventListener('click', async function () {
+                    let outputValue = outputEl.value.trim();
+                    if (!outputValue) {
+                        try {
+                            const result = convert(sourceEl.value);
+                            outputEl.value = result;
+                            outputValue = result;
+                            setStatus('Lien converti.');
+                        } catch (err) {
+                            setStatus(err.message || 'URL invalide.', true);
+                            return;
+                        }
+                    }
+
+                    let copied = false;
+
+                    if (navigator.clipboard && window.isSecureContext) {
+                        try {
+                            await navigator.clipboard.writeText(outputValue);
+                            copied = true;
+                        } catch (err) {
+                            copied = false;
+                        }
+                    }
+
+                    if (!copied) {
+                        copied = copyWithExecCommand(outputValue);
+                    }
+
+                    if (copied) {
+                        setStatus('Lien copié avec succès.');
+                        setTimeout(setStatus, 1500);
+                    } else {
+                        selectForManualCopy();
+                        setStatus('Copie auto échouée : faire Ctrl+C.', true);
+                    }
+                });
+            })();
+        </script>
+    </body>
+</html>
+
