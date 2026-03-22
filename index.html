@@ -10,8 +10,12 @@
             name="robots"
             content="noindex,nofollow"
         />
+        <meta
+            property="og:title"
+            content="Ente Album Photos Partagé"
+        />
 
-        <title>Ente Photos Redirect</title>
+        <title>Ente Album Photos Partagé</title>
 
         <style>
             /*@font-face {
@@ -109,7 +113,15 @@
                         url.searchParams.get('k')
                         || url.searchParams.get('h')
                         || (url.hash && url.hash.length > 1 ? url.hash.slice(1) : ''),
+                    title: url.searchParams.get('a'),
                 };
+
+                if (urlGet.title) {
+                    document.title = urlGet.title;
+
+                    const ogTitle = document.querySelector('meta[property="og:title"]');
+                    if (ogTitle) ogTitle.setAttribute('content', urlGet.title);
+                }
 
                 if (!urlGet.t || !urlGet.hash) {
                     console.error('Missing required URL parameters "t" and "k"/"h"/hash.');
