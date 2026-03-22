@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="fr">
     <head>
         <meta charset="UTF-8" />
@@ -173,13 +173,10 @@
                     const raw = (input || '').trim();
                     if (!raw) throw new Error('URL source manquante.');
 
-                    const url = new URL(raw);
-                    const hash = url.hash && url.hash.length > 1 ? url.hash.slice(1) : '';
-                    if (hash) {
-                        url.searchParams.set('k', hash);
-                    }
+                    const hashJoiner = raw.includes('?') ? '&k=' : '?k=';
+                    const withK = raw.includes('#') ? raw.replace('#', hashJoiner) : raw;
 
-                    url.hash = '';
+                    const url = new URL(withK);
                     url.hostname = forcePhotosSubdomain(url.hostname);
                     return url.toString();
                 }
@@ -267,4 +264,3 @@
         </script>
     </body>
 </html>
-
